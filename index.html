@@ -305,13 +305,15 @@ footer p{margin:0;color:var(--night-muted);font-size:14px;max-width:32ch}
         <div><span class="label">Web</span><span><a href="https://www.rhapsody.asia" target="_blank" rel="noopener">www.rhapsody.asia</a></span></div>
       </div>
     </div>
-    <form id="f" novalidate>
-      <div class="two"><label for="n">姓名<input id="n" autocomplete="name"></label><label for="c">公司或單位<input id="c" autocomplete="organization"></label></div>
-      <label for="e">Email<input id="e" type="email" autocomplete="email"></label>
-      <label for="s">想了解的服務<select id="s"><option>品牌戰略與全通路行銷</option><option>商業與永續視覺設計</option><option>餐飲品牌全案顧問</option><option>藝術策展與沉浸式體驗</option><option>其他</option></select></label>
-      <label for="m">需求說明<textarea id="m"></textarea></label>
-      <button class="btn primary" type="submit" style="justify-content:center">送出諮詢</button>
-      <p id="ok" role="status" hidden>此表單目前為展示版，尚未連接收信信箱，正式上線前請設定表單服務。</p>
+    <form id="f" action="https://formspree.io/f/mjywjdqz" method="POST">
+      <div class="two"><label for="n">姓名<input id="n" name="name" required autocomplete="name"></label><label for="c">公司或單位<input id="c" name="company" autocomplete="organization"></label></div>
+      <label for="e">Email<input id="e" name="email" type="email" required autocomplete="email"></label>
+      <label for="s">想了解的服務<select id="s" name="service"><option>品牌戰略與全通路行銷</option><option>商業與永續視覺設計</option><option>餐飲品牌全案顧問</option><option>藝術策展與沉浸式體驗</option><option>其他</option></select></label>
+      <label for="m">需求說明<textarea id="m" name="message" required></textarea></label>
+      <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" aria-hidden="true">
+      <input type="hidden" name="_subject" value="官網諮詢：銓曜文創 Rhapsody Creations">
+      <button class="btn primary" id="sb" type="submit" style="justify-content:center">送出諮詢</button>
+      <p id="ok" role="status" aria-live="polite" hidden></p>
     </form>
   </div></section>
 </main>
@@ -377,7 +379,21 @@ footer p{margin:0;color:var(--night-muted);font-size:14px;max-width:32ch}
   var w=['品牌戰略','全通路行銷','視覺設計','餐飲品牌顧問','藝術策展','沉浸式體驗'],m='';
   for(var j=0;j<4;j++)w.forEach(function(x){m+='<span>'+x+'</span>'});
   document.getElementById('mq').innerHTML=m;
-  document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();document.getElementById('ok').hidden=false});
+  var f=document.getElementById('f'),ok=document.getElementById('ok'),sb=document.getElementById('sb');
+  function say(t,bad){ok.textContent=t;ok.hidden=false;ok.style.color=bad?'#d64545':'var(--accent)'}
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(!f.checkValidity()){f.reportValidity();return}
+    sb.disabled=true;var lb=sb.textContent;sb.textContent='送出中…';ok.hidden=true;
+    fetch(f.action,{method:'POST',body:new FormData(f),headers:{'Accept':'application/json'}})
+      .then(function(r){return r.json().catch(function(){return {}}).then(function(d){return {ok:r.ok,d:d}})})
+      .then(function(x){
+        if(x.ok){f.reset();say('已收到您的諮詢，我們會在 2 個工作天內與您聯繫。謝謝！',false)}
+        else{var m=x.d&&x.d.errors&&x.d.errors.map(function(i){return i.message}).join('、');say('送出失敗'+(m?'：'+m:'')+'。請直接來信 yojunhou@gmail.com。',true)}
+      })
+      .catch(function(){say('目前無法送出，請稍後再試，或直接來信 yojunhou@gmail.com。',true)})
+      .then(function(){sb.disabled=false;sb.textContent=lb});
+  });
 })();
 </script>
 </body>
